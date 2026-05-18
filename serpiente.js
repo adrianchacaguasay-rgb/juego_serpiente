@@ -1,37 +1,32 @@
-
 // 1. Capturamos el canvas y su contexto de dibujo
 const canvas = document.getElementById("canvasJuego");
 const ctx = canvas.getContext("2d");
+
 let intervaloSerpiente;
 let direccionActual = "derecha";
 let puntaje = 0;
+let velocidad = 600;
+let tiempo = 0;
+let intervaloTiempo;
+
 const TAMANIO_CELDA = 25;
+
 const serpiente = [
   { x: 8, y: 7 },
   { x: 7, y: 7 },
   { x: 6, y: 7 },
-  { x: 5, y: 7 },
-  { x: 5, y: 8 },
-  { x: 5, y: 9 },
-  { x: 6, y: 9 },
-  { x: 7, y: 9 },
-  { x: 8, y: 9 },
-  { x: 8, y: 10 },
-  { x: 8, y: 11 }
+  { x: 5, y: 7 }
 ];
+
 let comida = {
   comidaX: 10,
   comidaY: 10
-}
+};
 
-
-
-
-
-// Generamos la primera comida antes de dibujar el juego
+// Inicio del juego
 generarComida();
-// Primera pintura del juego al cargar la página
 dibujarTodo();
+iniciarJuego();
 
 // =========================
 // FUNCIONES DE DIBUJO
@@ -49,8 +44,7 @@ function dibujarTodo() {
 }
 
 function dibujarTablero() {
-
-  for (let x = 0; x <= canvas.width; x = x + TAMANIO_CELDA) {
+  for (let x = 0; x <= canvas.width; x += TAMANIO_CELDA) {
     ctx.strokeStyle = "#050069";
     ctx.beginPath();
     ctx.moveTo(x, 0);
@@ -58,7 +52,7 @@ function dibujarTablero() {
     ctx.stroke();
   }
 
-  for (let y = 0; y <= canvas.height; y = y + TAMANIO_CELDA) {
+  for (let y = 0; y <= canvas.height; y += TAMANIO_CELDA) {
     ctx.strokeStyle = "#050069";
     ctx.beginPath();
     ctx.moveTo(0, y);
@@ -68,7 +62,6 @@ function dibujarTablero() {
 }
 
 function pintarParte(lineaX, lineaY) {
-
   let valorX = lineaX * TAMANIO_CELDA;
   let valorY = lineaY * TAMANIO_CELDA;
 
@@ -76,73 +69,75 @@ function pintarParte(lineaX, lineaY) {
 
   ctx.strokeStyle = "#ffffff";
   ctx.strokeRect(valorX, valorY, TAMANIO_CELDA, TAMANIO_CELDA);
-
 }
-
 
 function pintarSerpiente() {
   for (let indice = 0; indice < serpiente.length; indice++) {
     let parte = serpiente[indice];
 
     if (indice == 0) {
-      let valorX = parte.x * TAMANIO_CELDA;
-      let valorY = parte.y * TAMANIO_CELDA;
-
-      ctx.fillStyle = "#ff0000";
-      ctx.fillRect(valorX, valorY, TAMANIO_CELDA, TAMANIO_CELDA);
-
-      ctx.strokeStyle = "#ffffff";
-      ctx.strokeRect(valorX, valorY, TAMANIO_CELDA, TAMANIO_CELDA);
-
+      ctx.fillStyle = "#000000";
     } else {
-      ctx.fillStyle = "#0000a1";
-      pintarParte(parte.x, parte.y);
+      ctx.fillStyle = "#d108a6";
     }
+
+    pintarParte(parte.x, parte.y);
   }
 }
 
+function pintarComida() {
+  ctx.fillStyle = "#44ff00";
+  pintarParte(comida.comidaX, comida.comidaY);
+}
+
+// =========================
+// MOVIMIENTO
+// =========================
+
 function moverDerecha() {
-  let cabezaActual = serpiente[0];
+  let cabeza = serpiente[0];
+
   let nuevaCabeza = {
-    x: cabezaActual.x + 1,
-    y: cabezaActual.y
+    x: cabeza.x + 1,
+    y: cabeza.y
   };
 
   serpiente.unshift(nuevaCabeza);
-
-  // Eliminamos la última parte para simular el movimiento
   serpiente.pop();
 }
 
 function moverIzquierda() {
-  let cabezaActual = serpiente[0];
+  let cabeza = serpiente[0];
+
   let nuevaCabeza = {
-    x: cabezaActual.x - 1,
-    y: cabezaActual.y
+    x: cabeza.x - 1,
+    y: cabeza.y
   };
+
   serpiente.unshift(nuevaCabeza);
-  // Eliminamos la última parte para simular el movimiento
   serpiente.pop();
 }
+
 function moverAbajo() {
-  let cabezaActual = serpiente[0];
+  let cabeza = serpiente[0];
+
   let nuevaCabeza = {
-    x: cabezaActual.x,
-    y: cabezaActual.y + 1
+    x: cabeza.x,
+    y: cabeza.y + 1
   };
+
   serpiente.unshift(nuevaCabeza);
-  // Eliminamos la última parte para simular el movimiento
   serpiente.pop();
 }
 
 function moverArriba() {
-  let cabezaActual = serpiente[0];
+  let cabeza = serpiente[0];
+
   let nuevaCabeza = {
-    x: cabezaActual.x,
-    y: cabezaActual.y - 1
+    x: cabeza.x,
+    y: cabeza.y - 1
   };
   serpiente.unshift(nuevaCabeza);
-  // Eliminamos la última parte para simular el movimiento
   serpiente.pop();
 }
 
@@ -150,37 +145,59 @@ function cambiarDireccion(nuevaDireccion) {
   direccionActual = nuevaDireccion;
 }
 
+// =========================
+// CONTROL DEL JUEGO
+// =========================
+
 function iniciarJuego() {
-  intervaloSerpiente = setInterval(moverSerpiente, 600);
+   clearInterval(intervaloSerpiente);
+  intervaloSerpiente = setInterval(moverSerpiente,velocidad);
+  iniciarTiempo();
 }
 
 function pausarJuego() {
   clearInterval(intervaloSerpiente);
+  clearInterval(intervaloTiempo);
 }
 
 function moverSerpiente() {
   let ultimaParte = serpiente[serpiente.length - 1];
+
   if (direccionActual == "derecha") {
     moverDerecha();
   }
+
   if (direccionActual == "izquierda") {
     moverIzquierda();
   }
+
   if (direccionActual == "abajo") {
     moverAbajo();
   }
+
   if (direccionActual == "arriba") {
     moverArriba();
   }
 
-  if (atraparComida() == true) {
-    puntaje = puntaje + 1;
+  if (verificarGameOver()) {
+    pausarJuego();
+    alert("GAME OVER");
+    return;
+  }
+
+  if (atraparComida()) {
+    puntaje++;
     document.getElementById("puntaje").innerText = puntaje;
     serpiente.push(ultimaParte);
     generarComida();
   }
+
   dibujarTodo();
 }
+
+// =========================
+// COMIDA
+// =========================
 
 function generarComida() {
   let totalColumnas = canvas.width / TAMANIO_CELDA;
@@ -189,26 +206,66 @@ function generarComida() {
   comida.comidaY = Math.floor(Math.random() * totalFilas);
 }
 
-function pintarComida() {
+function atraparComida() {
+  let cabeza = serpiente[0];
+
+  if (
+    cabeza.x == comida.comidaX &&
+    cabeza.y == comida.comidaY
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+// GAME OVER
+
+function verificarGameOver() {
+  let cabeza = serpiente[0];
+
   let totalColumnas = canvas.width / TAMANIO_CELDA;
   let totalFilas = canvas.height / TAMANIO_CELDA;
 
-  ctx.fillStyle = "#44ff00";
-  pintarParte(comida.comidaX, comida.comidaY);
-}
-
-function atraparComida() {
-  let cabezaActual = serpiente[0];
-
-  if (cabezaActual.x == comida.comidaX && cabezaActual.y == comida.comidaY) {
+  if (cabeza.x < 0) {
     return true;
-  } else {
-    return false;
   }
+
+  if (cabeza.x >= totalColumnas) {
+    return true;
+  }
+
+  if (cabeza.y < 0) {
+    return true;
+  }
+
+  if (cabeza.y >= totalFilas) {
+    return true;
+  }
+  return false;
 }
 
+function reiniciarJuego() {
+  pausarJuego();
+  serpiente.length = 0;
+  serpiente.push(
+    { x: 8, y: 7 },
+    { x: 7, y: 7 },
+    { x: 6, y: 7 },
+    { x: 5, y: 7 }
+  );
+  direccionActual = "derecha";
+  puntaje = 0;
+  document.getElementById("puntaje").innerText = puntaje;
+  generarComida();
+  dibujarTodo();
+  iniciarJuego();
+}
 
-
-
-
-
+function iniciarTiempo() {
+  clearInterval(intervaloTiempo);
+  intervaloTiempo = setInterval(function () {
+    tiempo++;
+    document.getElementById("tiempo").innerText = tiempo;
+  }, 1000);
+}

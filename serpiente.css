@@ -69,8 +69,8 @@ h1 {
 canvas {
     width: 100%;
     max-width: 500px;
-    background: #29571d;
-    border: 4px solid #000000;
+    background: #1bcac1;
+    border: 4px solid #1100ac;
     border-radius: 16px;
     display: block;
     margin: 0 auto 20px auto;
